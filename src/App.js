@@ -22,8 +22,19 @@ class App extends React.Component{
 
 
   componentWillMount(){
+    function removeDuplicates(array, key) {
+      return array.reduce((accumulator, element) => {
+          if (!accumulator.find(el => el[key] === element[key])) {
+            accumulator.push(element);
+          }
+          return accumulator;
+        }, []);
+    }
+
+ 
     let url = 'https://api.twelvedata.com/stocks?apikey=c49c02d84d5e47889a00c45df4cb791e&country=USA&type=Common Stock'  //Url with apikey (Line 6)
-    fetch(url).then(response => response.json()).then((result) => this.setState({isloaded: true, list: result.data}))
+    fetch(url).then(response => response.json()).then((result)=>result.data).then(((rawresult)=>removeDuplicates(rawresult,'symbol')))
+      .then((results)=> this.setState({isloaded: true, list: results}))      
 
     
   }
