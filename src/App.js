@@ -61,7 +61,8 @@ class App extends React.Component{
 
         <form>
           <label htmlFor="stcname"> Stock symbol: </label>
-          <select name="stcname" id="stcname" onChange={this.handleChange} value={this.state.symsearch} >
+          <select name="stcname" id="stcname" onChange={this.handleChange} >
+            <option >{this.state.symsearch}</option>
             {this.state.list.length > 0 
               ? this.state.list.map(item => (
               <option key={item.symbol} >{item.symbol}</option>))
