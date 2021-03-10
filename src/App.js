@@ -11,15 +11,19 @@ function App() {
   const [countryname, setcountryname] = useState("Select Country");
   const [symsearch, setsymsearch] = useState("Select Symbol");
   const [isloaded, setIsLoaded] = useState(false);
+  const [priceLoaded, setPriceLoaded] = useState(false);
   const [price, setprice] = useState(NaN);
+  const [stockname,setstockname]=useState("the stock name")
 
   // Normaly the useEffect hook triggers when the page is initaly is rendered , we want to prevent this,  (initialrender checks this)
-  const initialrender = useRef(true);
+  const initialrender1 = useRef(true);
+  const initialrender2= useRef(true)
+
 
   useEffect(() => {
     //Here we check if the page was already rendered or not
-    if (initialrender.current) {
-      initialrender.current = false;
+    if (initialrender1.current) {
+      initialrender1.current = false;
     } else {
       //Here we call the api depending  the select box that is being moddified
       async function getStocks() {
@@ -29,20 +33,42 @@ function App() {
           url =
             "https://api.twelvedata.com/price?apikey=c49c02d84d5e47889a00c45df4cb791e&symbol=" +
             symsearch;
-          console.log(url);
+          setPriceLoaded(false)
           const json = await (await fetch(url)).json();
           setprice((parseFloat(json.price)));
+          setPriceLoaded(true)
         }
-        // Here the symbols depending on the country are called, please note that the .data in "json.data" is used to filter the json
-        url =
-          `https://api.twelvedata.com/stocks?apikey=c49c02d84d5e47889a00c45df4cb791e&country=` +
-          countryname;
-        const json = await (await fetch(url)).json();
-        setlist(removeDuplicates(json.data, "symbol"));
       }
       getStocks();
     }
-  }, [countryname, symsearch]);
+  }, [symsearch]);
+
+  useEffect(()=>{
+    if (initialrender2.current) {
+      initialrender2.current = false;
+    } else {
+      console.log("is rendering")
+    // Here the symbols depending on the country are called, please note that the .data in "json.data" is used to filter the json
+    let url=""
+    async function getStocks(){
+    url =`https://api.twelvedata.com/stocks?apikey=c49c02d84d5e47889a00c45df4cb791e&country=` +countryname;
+    console.log("url: ",url)
+    setIsLoaded(false)
+    const json = await (await fetch(url)).json();
+    console.log(json)
+    setlist(removeDuplicates(json.data, "symbol"));
+    setIsLoaded(true)    
+    }
+    getStocks()
+  }
+  },[countryname])
+
+  function handlepricechange(e){
+    console.log(e.target.getAttribute("data-stock-name"))
+    setsymsearch(e.target.getAttribute("data-stock-name"))
+    setstockname(e.target.value)
+
+  }
 
   return (
     <div className='App'>
@@ -53,7 +79,7 @@ function App() {
             About
           </a>
         <div className="flex-row ml-md-auto d-none d-md-flex">
-          <a href="https://twelvedata.com">Powered by Twelvedata</a>
+          <a href="https://twelvedata.com">Powered by Twelvedata API</a>
         </div>
         
       </div>
@@ -63,7 +89,7 @@ function App() {
           className='card-deck text-center'
           style={{ width: "20 rem", height: "80 px" }}
         >
-          <div className='card mt-2 mb-2 box-shadow'>
+          <div className='card mt-2 mb-2 box-shadow' style={{width:"15rem"}}>
             {/* Here the country  is selected, they are imported using the npm module "country-list-js" */}
             <form>
               <label htmlFor='countryname' className='pt-3'>
@@ -83,25 +109,39 @@ function App() {
               <br />
 
               {/* This is where the symbol is selected, the symbol are extracted from the api call and filter from line 41*/}
+
+              {isloaded === true || countryname ==="Select Country"  ?
+              <div>
               <label htmlFor='symsearch'> Stock symbol: </label>
               <select
                 className='ml-3'
                 name='symsearch'
                 id='symsearch'
-                onChange={(e) => setsymsearch(e.target.value)}
+                onChange={(e) =>handlepricechange(e) }
               >
                 <option>Select</option>
-                {list.length > 0 ? (
-                  list.map((item) => (
-                    <option key={item.symbol}>{item.symbol}</option>
-                  ))
-                ) : (
+                {list.length > 0 ? 
+                  list.map((item)=>
+                    <option key={item.symbol} data-stock-name={item.symbol}>{item.name}</option>
+                    )
+                 : (
                   <option> No symbol found </option>
                 )}
               </select>
+              </div>
+              :<h6><b>Loading ...</b></h6>}
+              
             </form>
-            
+
+            {/* Here the price will pop up when the stock symbol is selected (If the API doesn't shows any price for the selected symbol, it will diplay "No stock price available") */}
+            {priceLoaded === true && (
+            <div className="container border mb-3 mt-3 rounded" style={{width: "auto"}}>
             <h1><b>{(isNaN(price) ? "No stock price available" : price+" USD" )} </b></h1>
+            <h7>{stockname}</h7>
+            
+            </div>
+            )}
+            
           </div>
         </div>
       </div>
